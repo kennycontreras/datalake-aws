@@ -4,14 +4,16 @@ import os
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-#from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
 
 
+# Read config file for aws credentials
 config = configparser.ConfigParser()
 config.read('aws/credentials.cfg')
-
+# Environ variables
 os.environ['AWS_ACCESS_KEY_ID'] = config['AWS_ACCESS_KEY_ID']
 os.environ['AWS_SECRET_ACCESS_KEY'] = config['AWS_SECRET_ACCESS_KEY']
+
+# Spark session configuration
 
 
 def create_spark_session():
@@ -72,10 +74,20 @@ def log_schema():
 
 
 def process_song_data(spark, input_data, output_data):
-    # get filepath to song data file
+    '''
+        Process song data function: create a dataframe from all song-data files and process
+        the information to buil a star-schema.
+
+        Args:
+            Spark (object): Spark Session
+            input_data (string): S3 bucket path to read data for dataframes
+            output_data (string): S3 bucket to write information from dataframes
+    '''
+
+    # filepath for song data file
     song_data = input_data + "song_data/*.json"
 
-    # read song data file
+    # spark dataframe for song data
     df = spark.read.json(song_data, schema=song_schema())
 
     # extract columns to create songs table
@@ -94,6 +106,16 @@ def process_song_data(spark, input_data, output_data):
 
 
 def process_log_data(spark, input_data, output_data):
+    '''
+        Process log data function: create a dataframe from all log-data files and process
+        the information to complete the star-schema.
+
+        Args:
+            Spark (object): Spark Session
+            input_data (string): S3 bucket path to read data for dataframes
+            output_data (string): S3 bucket to write information from dataframes
+    '''
+
     # get filepath to log data file
     log_data = input_data + "log_data/*.json"
 

@@ -20,57 +20,8 @@ def create_spark_session():
     spark = SparkSession \
         .builder \
         .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.5") \
-        .config("fs.s3a.awsAccessKeyId", os.environ["AWS_ACCESS_KEY_ID"]) \
-        .config("fs.s3a.awsSecretAccessKey", os.environ["AWS_SECRET_ACCESS_KEY"]) \
-        .config("fs.s3a.endpoint", 's3.us-west-2.amazonaws.com') \
-        .config("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
         .getOrCreate()
     return spark
-
-# Schema for Song DataFrame
-
-
-def song_schema():
-    schema = T.StructType([
-        T.StructField("artist_id", T.StringType()),
-        T.StructField("artist_latitude", T.DoubleType()),
-        T.StructField("artist_longitude", T.DoubleType()),
-        T.StructField("artist_location", T.StringType()),
-        T.StructField("artist_name", T.StringType()),
-        T.StructField("duration", T.DoubleType()),
-        T.StructField("num_songs", T.IntegerType()),
-        T.StructField("song_id", T.StringType()),
-        T.StructField("title", T.StringType()),
-        T.StructField("year", T.IntegerType())
-    ])
-    return schema
-
-# Schema for Log DataFrame
-
-
-def log_schema():
-    schema = T.StructType([
-        T.StructField("artist", T.StringType()),
-        T.StructField("auth", T.StringType()),
-        T.StructField("firstName", T.StringType()),
-        T.StructField("gender", T.StringType()),
-        T.StructField("itemInSession", T.IntegerType()),
-        T.StructField("lastName", T.StringType()),
-        T.StructField("length", T.DoubleType()),
-        T.StructField("level", T.StringType()),
-        T.StructField("location", T.StringType()),
-        T.StructField("method", T.StringType()),
-        T.StructField("page", T.StringType()),
-        T.StructField("registration", T.StringType()),
-        T.StructField("sessionId", T.IntegerType()),
-        T.StructField("song", T.StringType()),
-        T.StructField("status", T.StringType()),
-        T.StructField("ts", T.LongType()),
-        T.StructField("userAgent", T.StringType()),
-        T.StructField("userId", T.StringType())
-    ])
-
-    return schema
 
 
 def process_song_data(spark, input_data, output_data):
@@ -85,16 +36,16 @@ def process_song_data(spark, input_data, output_data):
     '''
 
     # filepath for song data file
-    song_data = input_data + "song_data/*.json"
+    song_data = input_data + "song_data/*/*/*/*.json"
 
     # spark dataframe for song data
-    df = spark.read.json(song_data, schema=song_schema())
+    df = spark.read.json(song_data)
 
     # extract columns to create songs table
     songs_table = df.select('song_id', 'title', 'artist_id', 'year', 'duration')
 
     # write songs table to parquet files partitioned by year and artist
-    songs_table.write.partitionBy("year", "artist_id").parquet(output_data + "songs/")
+    songs_table.write.partitionBy("year", "artist_id").parquet(output_data + "songs.parquet")
 
     # extract columns to create artists table
     artists_table = df.select('artist_id', "artist_name", F.col(
@@ -102,7 +53,7 @@ def process_song_data(spark, input_data, output_data):
         F.col("artist_longitude").alias("longitude"))
 
     # write artists table to parquet files
-    artists_table.write.partitionBy("artist_id").parquet(output_data + "artists/")
+    artists_table.write.partitionBy("artist_id").parquet(output_data + "artists.parquet")
 
 
 def process_log_data(spark, input_data, output_data):
@@ -117,10 +68,10 @@ def process_log_data(spark, input_data, output_data):
     '''
 
     # get filepath to log data file
-    log_data = input_data + "log_data/*.json"
+    log_data = input_data + "log_data/*/*/*/*.json"
 
     # read log data file
-    df = spark.read.json(log_data, schema=log_schema())
+    df = spark.read.json(log_data)
 
     # filter by actions for song plays
     df = df.filter("page = 'NextSong'")
@@ -177,7 +128,7 @@ def main():
     output_data = "s3a://bucket-etl/"
 
     process_song_data(spark, input_data, output_data)
-    process_log_data(spark, input_data, output_data)
+    # process_log_data(spark, input_data, output_data)
 
 
 if __name__ == "__main__":

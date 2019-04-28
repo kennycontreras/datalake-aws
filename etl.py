@@ -43,7 +43,7 @@ def process_song_data(spark, input_data, output_data):
     df = spark.read.json(song_data)
 
     # extract columns to create songs table
-    songs_table = df.select('song_id', 'title', 'artist_id', 'year', 'duration')
+    songs_table = df.select('song_id', 'title', 'artist_id', 'year', 'duration').dropDuplicates()
 
     # write songs table to parquet files partitioned by year and artist
     songs_table.write.partitionBy("year", "artist_id").parquet(output_data + "songs.parquet")
@@ -51,7 +51,7 @@ def process_song_data(spark, input_data, output_data):
     # extract columns to create artists table
     artists_table = df.select('artist_id', "artist_name", F.col(
         "artist_location").alias("location"), F.col("artist_latitude").alias("latitude"),
-        F.col("artist_longitude").alias("longitude"))
+        F.col("artist_longitude").alias("longitude")).dropDuplicates()
 
     # write artists table to parquet files
     artists_table.write.partitionBy("artist_id").parquet(output_data + "artists.parquet")
@@ -79,7 +79,7 @@ def process_log_data(spark, input_data, output_data):
 
     # extract columns for users table
     users_table = df.select(F.col("userId").alias("user_id"), F.col("firstName").alias(
-        "first_name"), F.col("lastName").alias("last_name"), "gender", "level")
+        "first_name"), F.col("lastName").alias("last_name"), "gender", "level").dropDuplicates()
 
     # write users table to parquet files
     users_table.write.partitionBy("user_id").parquet(output_data + "users.parquet")
@@ -88,10 +88,6 @@ def process_log_data(spark, input_data, output_data):
     get_timestamp = udf(lambda x: datetime.datetime.fromtimestamp((x/1000.0)), T.TimestampType())
     df = df.withColumn("ts", get_timestamp(df.ts))
 
-    # create datetime column from original timestamp column
-    # get_datetime = udf()
-    # df =
-
     # extract columns to create time table
     time_table = df.select(F.col("ts").alias("start_time"),
                            F.hour("ts").alias("hour"),
@@ -99,7 +95,7 @@ def process_log_data(spark, input_data, output_data):
                            F.weekofyear("ts").alias("week"),
                            F.month("ts").alias("month"),
                            F.year("ts").alias("year"),
-                           F.dayofweek("ts").alias("weekday"))
+                           F.dayofweek("ts").alias("weekday")).dropDuplicates()
 
     # write time table to parquet files partitioned by year and month
     time_table.write.partitionBy("year", "month").parquet(output_data + "time.parquet")

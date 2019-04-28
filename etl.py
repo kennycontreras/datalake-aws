@@ -85,7 +85,7 @@ def process_log_data(spark, input_data, output_data):
     users_table.write.parquet(output_data + "users.parquet")
 
     # create timestamp column from original timestamp column
-    get_timestamp = udf(lambda x: datetime.datetime.fromtimestamp((x/1000.0)), T.TimestampType())
+    get_timestamp = F.udf(lambda x: datetime.fromtimestamp((x/1000.0)), T.TimestampType())
     df = df.withColumn("ts", get_timestamp(df.ts))
 
     # extract columns to create time table
@@ -123,7 +123,7 @@ def process_log_data(spark, input_data, output_data):
                 df.userAgent.alias("user_agent"))
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table = songplays_table.withColumn("year", F.year("start_time")) \
+    songplays_table.withColumn("year", F.year("start_time")) \
         .withColumn("month", F.month("start_time")) \
         .write.partitionBy("year", "month") \
         .parquet(output_data + "songplays.parquet")

@@ -71,10 +71,10 @@ def process_log_data(spark, input_data, output_data):
     # get filepath to log data file
     log_data = input_data + "log_data/*/*/*/*.json"
 
-    # read log data file
+    # Spark DataFrame for log data file
     df = spark.read.json(log_data)
 
-    # filter by actions for song plays
+    # Filter all dataframe by NextSong
     df = df.filter("page = 'NextSong'")
 
     # extract columns for users table
@@ -102,6 +102,7 @@ def process_log_data(spark, input_data, output_data):
 
     # read in song data to use for songplays table
     song_data = input_data + "song_data/*/*/*/*.json"
+    # Spark DataFrame for song data
     dfsong = spark.read.json(song_data)
 
     # join condition for song and log data
@@ -129,8 +130,11 @@ def process_log_data(spark, input_data, output_data):
 
 
 def main():
+    # Create spark session
     spark = create_spark_session()
+    # Input S3 bucket path
     input_data = "s3a://udacity-dend/"
+    # Output S3 bucket path
     output_data = "s3a://bucket-etl/"
 
     process_song_data(spark, input_data, output_data)

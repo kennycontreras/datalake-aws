@@ -81,7 +81,7 @@ def process_log_data(spark, input_data, output_data):
         "first_name"), F.col("lastName").alias("last_name"), "gender", "level")
 
     # write users table to parquet files
-    users_table.write.partitionBy("user_id").parquet(output_data + "users/")
+    users_table.write.partitionBy("user_id").parquet(output_data + "users.parquet")
 
     # create timestamp column from original timestamp column
     get_timestamp = udf(lambda x: datetime.datetime.fromtimestamp((x/1000.0)), T.TimestampType())
@@ -101,7 +101,7 @@ def process_log_data(spark, input_data, output_data):
                            F.dayofweek("ts").alias("weekday"))
 
     # write time table to parquet files partitioned by year and month
-    time_table.write.partitionBy("year", "month").parquet(output_data + "time/")
+    time_table.write.partitionBy("year", "month").parquet(output_data + "time.parquet")
 
     # read in song data to use for songplays table
     song_data = input_data + "song_data/*.json"
@@ -119,7 +119,7 @@ def process_log_data(spark, input_data, output_data):
                 df.userAgent.alias("user_agent"))
 
     # write songplays table to parquet files partitioned by year and month
-    # songplays_table
+    songplays_table = songplays_table.parquet(output_data + "songplays.parquet")
 
 
 def main():
@@ -128,7 +128,7 @@ def main():
     output_data = "s3a://bucket-etl/"
 
     process_song_data(spark, input_data, output_data)
-    # process_log_data(spark, input_data, output_data)
+    process_log_data(spark, input_data, output_data)
 
 
 if __name__ == "__main__":

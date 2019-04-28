@@ -54,7 +54,7 @@ def process_song_data(spark, input_data, output_data):
         F.col("artist_longitude").alias("longitude")).dropDuplicates()
 
     # write artists table to parquet files
-    artists_table.write.partitionBy("artist_id").parquet(output_data + "artists.parquet")
+    artists_table.write.parquet(output_data + "artists.parquet")
 
 
 def process_log_data(spark, input_data, output_data):
@@ -82,7 +82,7 @@ def process_log_data(spark, input_data, output_data):
         "first_name"), F.col("lastName").alias("last_name"), "gender", "level").dropDuplicates()
 
     # write users table to parquet files
-    users_table.write.partitionBy("user_id").parquet(output_data + "users.parquet")
+    users_table.write.parquet(output_data + "users.parquet")
 
     # create timestamp column from original timestamp column
     get_timestamp = udf(lambda x: datetime.datetime.fromtimestamp((x/1000.0)), T.TimestampType())

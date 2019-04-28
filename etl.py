@@ -4,6 +4,7 @@ import os
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from pyspark.sql import Window
 
 
 # Read config file for aws credentials
@@ -105,11 +106,17 @@ def process_log_data(spark, input_data, output_data):
 
     # read in song data to use for songplays table
     song_data = input_data + "song_data/*/*/*/*.json"
-    song_df = spark.read.json(song_data)
+    dfsong = spark.read.json(song_data)
+
+    # join condition for song and log data
+    join_condition = (dfsong.artist_name == df.artist) & (dfsong.title == df.song)
+
+    # Window to create a rownumber column for songplay_id
+    window = Window.orderBy(F.monotonically_increasing_id())
 
     # extract columns from joined song and log datasets to create songplays table
-    songplays_table = df.join(song_df, (song_df.artist_name == df.artist) & (song_df.title == df.song))\
-        .select((F.monotonically_increasing_id()+1).alias("songplay_id"),
+    songplays_table = df.join(song_df, join_condition)\
+        .select(F.row_number().over(window).alias("songplay_id"),
                 df.ts.alias("start_time"), dfLog.userId.alias("user_id"),
                 df.level,
                 song_df.song_id,

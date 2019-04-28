@@ -111,22 +111,25 @@ def process_log_data(spark, input_data, output_data):
     # join condition for song and log data
     join_condition = (dfsong.artist_name == df.artist) & (dfsong.title == df.song)
 
-    # Window to create a rownumber column for songplay_id
+    # Window to create a rownumber column (songplay_id on songplays table)
     window = Window.orderBy(F.monotonically_increasing_id())
 
     # extract columns from joined song and log datasets to create songplays table
-    songplays_table = df.join(song_df, join_condition)\
+    songplays_table = df.join(dfsong, join_condition)\
         .select(F.row_number().over(window).alias("songplay_id"),
-                df.ts.alias("start_time"), dfLog.userId.alias("user_id"),
+                df.ts.alias("start_time"), df.userId.alias("user_id"),
                 df.level,
-                song_df.song_id,
-                song_df.artist_id,
+                dfsong.song_id,
+                dfsong.artist_id,
                 df.sessionId.alias("session_id"),
                 df.location,
                 df.userAgent.alias("user_agent"))
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table = songplays_table.parquet(output_data + "songplays.parquet")
+    songplays_table = songplays_table.withColumn("year", F.year("start_time")) \
+        .withColumn("month", F.month("start_time")) \
+        .write.partitionBy("year", "month") \
+        .parquet(output_data + "songplays.parquet")
 
 
 def main():

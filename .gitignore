@@ -2,7 +2,6 @@
 config/
 .*
 !/.gitignore
-/aws/
 
 # Don't track these files
 .cache-StriderKeni

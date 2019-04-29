@@ -9,10 +9,10 @@ from pyspark.sql import Window
 
 # Read config file for aws credentials
 config = configparser.ConfigParser()
-config.read('aws/credentials.cfg')
+config.read_file(open('aws/credentials.cfg'))
 # Environ variables
-os.environ['AWS_ACCESS_KEY_ID'] = config['AWS_ACCESS_KEY_ID']
-os.environ['AWS_SECRET_ACCESS_KEY'] = config['AWS_SECRET_ACCESS_KEY']
+os.environ['AWS_ACCESS_KEY_ID'] = config['AWS']['AWS_ACCESS_KEY_ID']
+os.environ['AWS_SECRET_ACCESS_KEY'] = config['AWS']['AWS_SECRET_ACCESS_KEY']
 
 # Spark session configuration
 
